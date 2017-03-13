@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.brutusin</groupId>
+        <artifactId>brutusin</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <groupId>org.brutusin</groupId>
+    <artifactId>jack-compiler</artifactId>
+    <packaging>jar</packaging>   
+    <version>1.0.0-SNAPSHOT</version>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Jack compiler for the Hack machine (nand2tetris.org)</description>
+    <url>https://github.com/brutusin/jack-compiler</url>
+    
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/brutusin/jack-compiler/issues</url>
+    </issueManagement>
+    
+    <ciManagement>
+        <system>travis-ci</system>
+        <url>https://travis-ci.org/brutusin/jack-compiler</url>
+    </ciManagement>
+    
+    <scm>
+        <url>https://github.com/brutusin/jack-compiler</url>
+        <connection>scm:git:https://github.com/brutusin/jack-compiler.git</connection>
+        <developerConnection>scm:git:https://github.com/brutusin/jack-compiler.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.brutusin</groupId>
+            <artifactId>commons</artifactId>
+            <version>1.6.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+</project>
