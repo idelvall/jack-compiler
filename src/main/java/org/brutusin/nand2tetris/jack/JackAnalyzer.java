@@ -48,13 +48,13 @@ public class JackAnalyzer {
         }
     }
 
-    private static void compile(File f) throws ParseException {
+    private static void compile(File f) throws CompilerException {
         if (f.getName().endsWith(".jack")) {
             try {
                 String className = f.getName().substring(0, f.getName().length() - 5);
                 try (FileOutputStream fos = new FileOutputStream(new File(f.getParentFile(), className + ".xml"))) {
                     ClassParser cp = new ClassParser(new Tokenizer(new String(Files.readAllBytes(f.toPath()))));
-                    fos.write(cp.getClassNode().toString().getBytes());
+                    fos.write(cp.getParsedClass().toString().getBytes());
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);

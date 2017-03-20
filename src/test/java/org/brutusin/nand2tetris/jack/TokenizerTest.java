@@ -29,40 +29,40 @@ public class TokenizerTest {
     public TokenizerTest() {
     }
     @Test
-    public void test1() throws IOException, ParseException{
+    public void test1() throws IOException, CompilerException{
         test("ArrayTest/Main.jack", "ArrayTest/MainT.xml");
     }
     
     @Test
-    public void test2() throws IOException, ParseException{
+    public void test2() throws IOException, CompilerException{
         test("ExpressionLessSquare/Main.jack", "ExpressionLessSquare/MainT.xml");
     }
     
     @Test
-    public void test3() throws IOException, ParseException{
+    public void test3() throws IOException, CompilerException{
         test("ExpressionLessSquare/Square.jack", "ExpressionLessSquare/SquareT.xml");
     }
     
     @Test
-    public void test4() throws IOException, ParseException{
+    public void test4() throws IOException, CompilerException{
         test("ExpressionLessSquare/SquareGame.jack", "ExpressionLessSquare/SquareGameT.xml");
     }
     @Test
-    public void test5() throws IOException, ParseException{
+    public void test5() throws IOException, CompilerException{
         test("Square/Main.jack", "Square/MainT.xml");
     }
     
     @Test
-    public void test6() throws IOException, ParseException{
+    public void test6() throws IOException, CompilerException{
         test("Square/Square.jack", "Square/SquareT.xml");
     }
     
     @Test
-    public void test7() throws IOException, ParseException{
+    public void test7() throws IOException, CompilerException{
         test("Square/SquareGame.jack", "Square/SquareGameT.xml");
     }
 
-    public void test(String codeResName, String xmlResName) throws IOException, ParseException {
+    public void test(String codeResName, String xmlResName) throws IOException, CompilerException {
         String code = Miscellaneous.toString(getClass().getClassLoader().getResourceAsStream(codeResName), "UTF-8");
         String xml = Miscellaneous.toString(getClass().getClassLoader().getResourceAsStream(xmlResName), "UTF-8");
         Tokenizer tokenizer = new Tokenizer(code);

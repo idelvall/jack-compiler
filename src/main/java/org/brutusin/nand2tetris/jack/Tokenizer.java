@@ -82,11 +82,11 @@ public class Tokenizer implements Iterable<Tokenizer.Token> {
         SYMBOLS.add('=');
     }
 
-    public Tokenizer(String code) throws ParseException {
+    public Tokenizer(String code) throws CompilerException {
         this.tokens = parse(code);
     }
 
-    private static List<Token> parse(String code) throws ParseException {
+    private static List<Token> parse(String code) throws CompilerException {
         LinkedList<Token> ret = new LinkedList<>();
         boolean escaping = false;
         boolean inString = false;
@@ -100,7 +100,7 @@ public class Tokenizer implements Iterable<Tokenizer.Token> {
             char c = code.charAt(i);
             if (inString) {
                 if (c == '\n') {
-                    throw new ParseException("End of line found inside string literal", lineNumber, start - lineStartIndex + 1);
+                    throw new CompilerException("End of line found inside string literal", lineNumber, start - lineStartIndex + 1);
                 }
                 if (escaping) {
                     escaping = false;
@@ -166,7 +166,7 @@ public class Tokenizer implements Iterable<Tokenizer.Token> {
             i++;
         }
         if (inString) {
-            throw new ParseException("Non terminated string literal", lineNumber, start - lineStartIndex + 1);
+            throw new CompilerException("Non terminated string literal", lineNumber, start - lineStartIndex + 1);
         }
         if (i != start) {
             ret.add(createTokenFrom(code.substring(start, i), lineNumber, start - lineStartIndex + 1));
@@ -174,16 +174,16 @@ public class Tokenizer implements Iterable<Tokenizer.Token> {
         return ret;
     }
 
-    private static Token createTokenFrom(String s, int line, int column) throws ParseException {
+    private static Token createTokenFrom(String s, int line, int column) throws CompilerException {
         if (s.charAt(0) > 47 && s.charAt(0) < 58) { // starts with number
             try {
                 BigInteger v = new BigInteger(s);
                 if (MAX_INT_LITERAL.compareTo(v) < 0) {
-                    throw new ParseException("Integer literal cannot exceed " + MAX_INT_LITERAL, line, column);
+                    throw new CompilerException("Integer literal cannot exceed " + MAX_INT_LITERAL, line, column);
                 }
                 return new Token(s, Token.Type.integerConstant, line, column);
             } catch (NumberFormatException nfe) {
-                throw new ParseException("Invalid token found: " + s, line, column);
+                throw new CompilerException("Invalid token found: " + s, line, column);
             }
         } else if (KEYWORDS.contains(s)) {
             return new Token(s, Token.Type.keyword, line, column);
@@ -221,7 +221,7 @@ public class Tokenizer implements Iterable<Tokenizer.Token> {
         try {
             Tokenizer tokenizer = new Tokenizer("class {a=1}");
             System.out.println(tokenizer);
-        } catch (ParseException pe) {
+        } catch (CompilerException pe) {
             System.err.println(pe.getMessage() + " at line " + pe.getLineNumber() + ", column " + pe.getColNumber());
         }
     }

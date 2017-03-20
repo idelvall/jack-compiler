@@ -1,5 +1,3 @@
-package org.brutusin.nand2tetris.jack;
-
 /*
  * Copyright 2017 Ignacio del Valle Alles idelvall@brutusin.org.
  *
@@ -15,32 +13,22 @@ package org.brutusin.nand2tetris.jack;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+package org.brutusin.nand2tetris.jack.model;
 
 /**
  *
  * @author Ignacio del Valle Alles idelvall@brutusin.org
  */
- public class ParseException extends Exception {
+public class DoStatement extends CompilerElement implements Statement {
 
-    private final Integer lineNumber;
-    private final Integer colNumber;
+    private final SubroutineCall action;
 
-    public ParseException(String message) {
-        this(message, null, null);
+    public DoStatement(Integer lineNumber, Integer columnNumber, SubroutineCall action) {
+        super(lineNumber, columnNumber);
+        this.action = action;
     }
 
-    public ParseException(String message, Integer lineNumber, Integer colNumber) {
-        super(message);
-        this.lineNumber = lineNumber;
-        this.colNumber = colNumber;
-    }
-
-    public Integer getLineNumber() {
-        return lineNumber;
-    }
-
-    public Integer getColNumber() {
-        return colNumber;
+    public SubroutineCall getAction() {
+        return action;
     }
 }
