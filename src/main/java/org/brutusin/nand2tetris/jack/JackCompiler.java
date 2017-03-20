@@ -15,8 +15,6 @@ package org.brutusin.nand2tetris.jack;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,7 +24,7 @@ import java.nio.file.Files;
  *
  * @author Ignacio del Valle Alles idelvall@brutusin.org
  */
-public class JackAnalyzer {
+public class JackCompiler {
 
     public static void main(String[] args) throws Exception {
         File f = new File(args[0]);
@@ -40,7 +38,7 @@ public class JackAnalyzer {
             for (int i = 0; i < files.length; i++) {
                 File file = files[i];
                 if (file.isFile()) {
-                     compile(file);
+                    compile(file);
                 }
             }
         } else if (f.isFile()) {
@@ -52,12 +50,15 @@ public class JackAnalyzer {
         if (f.getName().endsWith(".jack")) {
             try {
                 String className = f.getName().substring(0, f.getName().length() - 5);
-                try (FileOutputStream fos = new FileOutputStream(new File(f.getParentFile(), className + ".xml"))) {
+                try (FileOutputStream fos = new FileOutputStream(new File(f.getParentFile(), className + ".vm"))) {
                     ClassParser cp = new ClassParser(new Tokenizer(new String(Files.readAllBytes(f.toPath()))));
-                    fos.write(cp.getParsedClass().toString().getBytes());
+                    ClassWriter cw = new ClassWriter(cp.getParsedClass());
+                    cw.writeCode(fos);
                 }
             } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
+            } catch (CompilerException ce) {
+                System.err.println("Error compiling " + f + ", line " + ce.getLineNumber() + ", column " + ce.getColNumber() + ": " + ce.getMessage());
             }
         }
     }

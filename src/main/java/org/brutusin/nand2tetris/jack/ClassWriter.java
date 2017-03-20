@@ -75,6 +75,13 @@ public class ClassWriter {
 
     private void processSubroutine(Subroutine subroutine) throws CompilerException {
         SymbolTable st = new SymbolTable();
+        if (subroutine.getType() == Subroutine.Type.method) {
+            try {
+                st.add(new Declaration(subroutine.getLineNumber(), subroutine.getColumnNumber(), clazz.getName(), "this", Declaration.Scope.argument));
+            } catch (SymbolTable.AlreadyRegisteredException ex) {
+                throw new AssertionError();
+            }
+        }
         List<Declaration> declarations = subroutine.getDeclarations();
         int varCount = 0;
         for (Declaration declaration : declarations) {
@@ -141,13 +148,9 @@ public class ClassWriter {
 
     private void processSubroutineCall(SubroutineCall call, SymbolTable st) throws CompilerException {
         List<Expression> arguments = call.getArguments();
-        for (Expression argument : arguments) {
-            processExpression(argument, st);
-        }
-        //TODO validate num arguments
         String target = call.getTarget();
         int offset = 0;
-        if (target == null) { // method invocation in same object
+        if (call.getTarget() == null) { // method invocation in same object
             target = clazz.getName();
             code.append("push pointer 0");
             code.append("\n");
@@ -158,12 +161,16 @@ public class ClassWriter {
                 entry = classSymTable.getEntry(target);
             }
             if (entry != null) { // method invocation to other object
-                entry = classSymTable.getEntry(target);
+                target = entry.getDeclaration().getType();
                 code.append("push ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
                 code.append("\n");
                 offset = 1;
             }
         }
+        for (Expression argument : arguments) {
+            processExpression(argument, st);
+        }
+        //TODO validate num arguments
         code.append("call").append(" ").append(target).append(".").append(call.getName()).append(" ").append((arguments.size() + offset));
         code.append("\n");
     }
@@ -178,8 +185,23 @@ public class ClassWriter {
         if (entry == null) {
             throw new CompilerException("Variable not declared ' " + varName + "'", statement.getTarget().getLineNumber(), statement.getTarget().getColumnNumber());
         }
-        code.append("pop ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
-        code.append("\n");
+        Term.Reference target = statement.getTarget();
+        if (target instanceof Term.ArrayReference) {
+            Term.ArrayReference arrayRef = (Term.ArrayReference) target;
+            code.append("push ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
+            code.append("\n");
+            Expression indexExp = arrayRef.getIndex();
+            processExpression(indexExp, st);
+            code.append("add");
+            code.append("\n");
+            code.append("pop pointer 1");
+            code.append("\n");
+            code.append("pop that 0");
+            code.append("\n");
+        } else {
+            code.append("pop ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
+            code.append("\n");
+        }
     }
 
     private void processIfStatement(IfStatement statement, SymbolTable st) throws CompilerException {
@@ -272,6 +294,18 @@ public class ClassWriter {
                     code.append("push pointer 0");
                     code.append("\n");
                 }
+            } else if (constant.getType() == Term.Constant.Type.string) {
+                int length = constant.getValue().length();
+                code.append("push constant ").append(length);
+                code.append("\n");
+                code.append("call String.new 1");
+                code.append("\n");
+                for (int i = 0; i < length; i++) {
+                    code.append("push constant ").append(Integer.valueOf(constant.getValue().charAt(i)));
+                    code.append("\n");
+                    code.append("call String.appendChar 2");
+                    code.append("\n");
+                }
             }
         } else if (term instanceof Expression) {
             processExpression((Expression) term, st);
@@ -295,76 +329,49 @@ public class ClassWriter {
             if (entry == null) {
                 throw new CompilerException("Variable not declared ' " + varName + "'", ref.getLineNumber(), ref.getColumnNumber());
             }
-            code.append("push ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
-            code.append("\n");
+            if (ref instanceof Term.ArrayReference) {
+                Term.ArrayReference arrayRef = (Term.ArrayReference) ref;
+                code.append("push ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
+                code.append("\n");
+                Expression indexExp = arrayRef.getIndex();
+                processExpression(indexExp, st);
+                code.append("add");
+                code.append("\n");
+                code.append("pop pointer 1");
+                code.append("\n");
+                code.append("push that 0");
+                code.append("\n");
+            } else {
+                code.append("push ").append(entry.getDeclaration().getScope()).append(" ").append(entry.getIndex());
+                code.append("\n");
+            }
         } else if (term instanceof SubroutineCall) {
             processSubroutineCall((SubroutineCall) term, st);
         }
     }
 
     public static void main(String[] args) throws Exception {
-        String code = "class SquareGame {\n"
-                + "   field Square square; // the square of this game\n"
-                + "   field int direction; // the square's current direction: \n"
-                + "                        // 0=none, 1=up, 2=down, 3=left, 4=right\n"
+        String code = "class Main {\n"
+                + "   function void main() {\n"
+                + "     var Array a; \n"
+                + "     var int length;\n"
+                + "     var int i, sum;\n"
                 + "\n"
-                + "   /** Constructs a new Square Game. */\n"
-                + "   constructor SquareGame new() {\n"
-                + "      // Creates a 30 by 30 pixels square and positions it at the top-left\n"
-                + "      // of the screen.\n"
-                + "      let square = Square.new(0, 0, 30);\n"
-                + "      let direction = 0;  // initial state is no movement\n"
-                + "      return this;\n"
-                + "   }\n"
-                + "\n"
-                + "   /** Disposes this game. */\n"
-                + "   method void dispose() {\n"
-                + "      do square.dispose();\n"
-                + "      do Memory.deAlloc(this);\n"
-                + "      return;\n"
-                + "   }\n"
-                + "\n"
-                + "   /** Moves the square in the current direction. */\n"
-                + "   method void moveSquare() {\n"
-                + "      if (direction = 1) { do square.moveUp(); }\n"
-                + "      if (direction = 2) { do square.moveDown(); }\n"
-                + "      if (direction = 3) { do square.moveLeft(); }\n"
-                + "      if (direction = 4) { do square.moveRight(); }\n"
-                + "      do Sys.wait(5);  // delays the next movement\n"
-                + "      return;\n"
-                + "   }\n"
-                + "\n"
-                + "   /** Runs the game: handles the user's inputs and moves the square accordingly */\n"
-                + "   method void run() {\n"
-                + "      var char key;  // the key currently pressed by the user\n"
-                + "      var boolean exit;\n"
-                + "      let exit = false;\n"
-                + "      \n"
-                + "      while (~exit) {\n"
-                + "         // waits for a key to be pressed\n"
-                + "         while (key = 0) {\n"
-                + "            let key = Keyboard.keyPressed();\n"
-                + "            do moveSquare();\n"
-                + "         }\n"
-                + "         if (key = 81)  { let exit = true; }     // q key\n"
-                + "         if (key = 90)  { do square.decSize(); } // z key\n"
-                + "         if (key = 88)  { do square.incSize(); } // x key\n"
-                + "         if (key = 131) { let direction = 1; }   // up arrow\n"
-                + "         if (key = 133) { let direction = 2; }   // down arrow\n"
-                + "         if (key = 130) { let direction = 3; }   // left arrow\n"
-                + "         if (key = 132) { let direction = 4; }   // right arrow\n"
-                + "\n"
-                + "         // waits for the key to be released\n"
-                + "         while (~(key = 0)) {\n"
-                + "            let key = Keyboard.keyPressed();\n"
-                + "            do moveSquare();\n"
-                + "         }\n"
-                + "     } // while\n"
+                + "     let length = Keyboard.readInt(\"How many numbers? \");\n"
+                + "     let a = Array.new(length); // constructs the array\n"
+                + "     \n"
+                + "     let i = 0;\n"
+                + "     while (i < length) {\n"
+                + "        let a[i] = Keyboard.readInt(\"Enter a number: \");\n"
+                + "        let sum = sum + a[i];\n"
+                + "        let i = i + 1;\n"
+                + "     }\n"
+                + "     \n"
+                + "     do Output.printString(\"The average is \");\n"
+                + "     do Output.printInt(sum / length);\n"
                 + "     return;\n"
                 + "   }\n"
-                + "}\n"
-                + "\n"
-                + "";
+                + "}";
 
         ClassParser cp = new ClassParser(new Tokenizer(code));
         ClassWriter cw = new ClassWriter(cp.getParsedClass());

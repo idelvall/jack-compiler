@@ -236,7 +236,7 @@ public class ClassParser {
             return new Term.Constant(token.getLineNumber(), token.getColumNumber(), token.getValue(), Term.Constant.Type.integer);
         } else if (token.getType() == Tokenizer.Token.Type.stringConstant) {
             nextTokens.poll();
-            return new Term.Constant(token.getLineNumber(), token.getColumNumber(), token.getValue().substring(1, token.getValue().length() - 1), Term.Constant.Type.string);
+            return new Term.Constant(token.getLineNumber(), token.getColumNumber(), token.getValue(), Term.Constant.Type.string);
         } else if (token.getType() == Tokenizer.Token.Type.keyword) {
             if (token.getValue().equals("true") || token.getValue().equals("false") || token.getValue().equals("null") || token.getValue().equals("this")) {
                 nextTokens.poll();
