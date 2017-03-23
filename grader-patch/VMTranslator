@@ -1,0 +1,7 @@
+#!/bin/sh
+MAIN_CLASS=$(cat lang.txt | awk -F: '{print $2}')
+if [ -z "$MAIN_CLASS" ]; then
+    java VMTranslator $*
+else
+    java $MAIN_CLASS $*
+fi
